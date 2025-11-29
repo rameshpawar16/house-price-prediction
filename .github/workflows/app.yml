@@ -1,65 +1,54 @@
-name: CI/CD Pipeline
+name: CI/CD to GitHub Pages
 
 on:
   push:
     branches:
       - main
-    paths:
-      - "src/**"
-      - "tests/**"
-      - "models/**"
-      - "requirements.txt"
-      - ".github/workflows/**"
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
 
 jobs:
   test:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: "3.10"
 
       - name: Install dependencies
-        run: pip install -r requirements.txt
+        run: |
+          if [ -f requirement.txt ]; then pip install -r requirement.txt; fi
 
       - name: Run tests
-        run: pytest
-
-  build:
-    runs-on: ubuntu-latest
-    needs: test
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: "3.10"
-
-      - name: Install dependencies
-        run: pip install -r requirements.txt
-
-      - name: Train and export model
-        run: python src/model.py
-
-      - name: Upload trained model as artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: trained-model
-          path: models/
-
-  deploy:
-    runs-on: ubuntu-latest
-    needs: build
-
-    steps:
-      - name: Trigger Render Deploy Hook
         run: |
-          curl -X POST ${{ secrets.RENDER_DEPLOY_HOOK }}
+          if [ -d tests ]; then pytest; else echo "No tests found"; fi
+
+  build-and-deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # If you have a build step (e.g. npm run build) put it here.
+      # For a simple static site just use the repo files.
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: .  # folder that contains index.html
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
