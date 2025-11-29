@@ -50,7 +50,7 @@ jobs:
         run: python src/model.py
 
       - name: Upload trained model as artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: trained-model
           path: models/
