@@ -24,11 +24,16 @@ jobs:
 
       - name: Install dependencies
         run: |
+          # If you have requirements.txt or requirement.txt, install them
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
           if [ -f requirement.txt ]; then pip install -r requirement.txt; fi
+          # Always install pytest for tests
+          pip install pytest
 
       - name: Run tests
         run: |
           if [ -d tests ]; then pytest; else echo "No tests found"; fi
+
 
   build-and-deploy:
     needs: test
